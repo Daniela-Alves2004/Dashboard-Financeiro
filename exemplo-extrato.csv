@@ -1,0 +1,12 @@
+Data Lançamento,Histórico,Descrição,Valor,Saldo
+01/01/2024,Pix,Supermercado ABC,-150.50,5000.00
+02/01/2024,Débito,Posto Shell,-80.00,4920.00
+03/01/2024,Crédito,Restaurante XYZ,-45.00,4875.00
+04/01/2024,Pix,Salário,5000.00,9875.00
+05/01/2024,Débito,Netflix,-29.90,9845.10
+06/01/2024,Pix,Padaria do João,-25.00,9820.10
+07/01/2024,Crédito,Amazon,-199.99,9620.11
+08/01/2024,Débito,Uber,-35.50,9584.61
+09/01/2024,Pix,Farmácia Central,-89.90,9494.71
+10/01/2024,Crédito,Ifood,-55.00,9439.71
+
