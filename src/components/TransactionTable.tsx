@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
-import { Transaction, Person, Categoria, CATEGORIAS } from '../types'
-import { updateTransaction } from '../utils/storage'
+import { Transaction, CATEGORIAS } from '../types'
+import { updateTransaction, deleteTransaction } from '../utils/storage'
 import './TransactionTable.css'
 
 interface TransactionTableProps {
@@ -14,7 +14,8 @@ function TransactionTable({ transactions, title, onUpdate }: TransactionTablePro
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
   const [filterHistorico, setFilterHistorico] = useState('')
   const [filterDescricao, setFilterDescricao] = useState('')
-  const [editingCategory, setEditingCategory] = useState<string | null>(null)
+  const [editRowId, setEditRowId] = useState<string | null>(null)
+  const [editDraft, setEditDraft] = useState<Transaction | null>(null)
 
   // Filtra e ordena as transações
   const filteredAndSorted = useMemo(() => {
@@ -58,9 +59,45 @@ function TransactionTable({ transactions, title, onUpdate }: TransactionTablePro
     }
   }
 
-  const handleCategoryChange = (transactionId: string, newCategory: Categoria) => {
-    updateTransaction(transactionId, { categoria: newCategory })
-    setEditingCategory(null)
+  const startEdit = (t: Transaction) => {
+    setEditRowId(t.id)
+    setEditDraft({ ...t })
+  }
+
+  const cancelEdit = () => {
+    setEditRowId(null)
+    setEditDraft(null)
+  }
+
+  const handleDraftChange = (field: keyof Transaction, value: string) => {
+    if (!editDraft) return
+    if (field === 'valor' || field === 'saldo') {
+      const parsed = value === '' ? NaN : parseFloat(value)
+      setEditDraft({ ...editDraft, [field]: parsed })
+    } else {
+      setEditDraft({ ...editDraft, [field]: value })
+    }
+  }
+
+  const saveEdit = () => {
+    if (!editDraft) return
+    if (!editDraft.dataLancamento || !editDraft.historico || !editDraft.descricao || Number.isNaN(editDraft.valor) || Number.isNaN(editDraft.saldo)) {
+      return
+    }
+    updateTransaction(editDraft.id, {
+      dataLancamento: editDraft.dataLancamento,
+      historico: editDraft.historico,
+      descricao: editDraft.descricao,
+      valor: editDraft.valor,
+      saldo: editDraft.saldo,
+      categoria: editDraft.categoria
+    })
+    cancelEdit()
+    if (onUpdate) onUpdate()
+  }
+
+  const handleDelete = (transactionId: string) => {
+    deleteTransaction(transactionId)
     if (onUpdate) onUpdate()
   }
 
@@ -138,25 +175,74 @@ function TransactionTable({ transactions, title, onUpdate }: TransactionTablePro
               </th>
               <th>Saldo</th>
               <th>Categoria</th>
+              <th>Ações</th>
             </tr>
           </thead>
           <tbody>
             {filteredAndSorted.map(transaction => (
               <tr key={transaction.id}>
-                <td>{formatDate(transaction.dataLancamento)}</td>
-                <td>{transaction.historico}</td>
-                <td>{transaction.descricao}</td>
-                <td className={transaction.valor < 0 ? 'negative' : 'positive'}>
-                  {formatCurrency(transaction.valor)}
-                </td>
-                <td>{formatCurrency(transaction.saldo)}</td>
                 <td>
-                  {editingCategory === transaction.id ? (
+                  {editRowId === transaction.id ? (
+                    <input
+                      type="date"
+                      value={editDraft?.dataLancamento || ''}
+                      onChange={(e) => handleDraftChange('dataLancamento', e.target.value)}
+                    />
+                  ) : (
+                    formatDate(transaction.dataLancamento)
+                  )}
+                </td>
+                <td>
+                  {editRowId === transaction.id ? (
+                    <input
+                      type="text"
+                      value={editDraft?.historico || ''}
+                      onChange={(e) => handleDraftChange('historico', e.target.value)}
+                    />
+                  ) : (
+                    transaction.historico
+                  )}
+                </td>
+                <td>
+                  {editRowId === transaction.id ? (
+                    <input
+                      type="text"
+                      value={editDraft?.descricao || ''}
+                      onChange={(e) => handleDraftChange('descricao', e.target.value)}
+                    />
+                  ) : (
+                    transaction.descricao
+                  )}
+                </td>
+                <td className={transaction.valor < 0 ? 'negative' : 'positive'}>
+                  {editRowId === transaction.id ? (
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={editDraft && !Number.isNaN(editDraft.valor) ? editDraft.valor : ''}
+                      onChange={(e) => handleDraftChange('valor', e.target.value)}
+                    />
+                  ) : (
+                    formatCurrency(transaction.valor)
+                  )}
+                </td>
+                <td>
+                  {editRowId === transaction.id ? (
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={editDraft && !Number.isNaN(editDraft.saldo) ? editDraft.saldo : ''}
+                      onChange={(e) => handleDraftChange('saldo', e.target.value)}
+                    />
+                  ) : (
+                    formatCurrency(transaction.saldo)
+                  )}
+                </td>
+                <td>
+                  {editRowId === transaction.id ? (
                     <select
-                      value={transaction.categoria || 'Outros'}
-                      onChange={(e) => handleCategoryChange(transaction.id, e.target.value as Categoria)}
-                      onBlur={() => setEditingCategory(null)}
-                      autoFocus
+                      value={editDraft?.categoria || 'Outros'}
+                      onChange={(e) => handleDraftChange('categoria', e.target.value)}
                       className="category-select"
                     >
                       {CATEGORIAS.map(cat => (
@@ -164,13 +250,20 @@ function TransactionTable({ transactions, title, onUpdate }: TransactionTablePro
                       ))}
                     </select>
                   ) : (
-                    <span
-                      onClick={() => setEditingCategory(transaction.id)}
-                      className="category-editable"
-                      title="Clique para editar"
-                    >
-                      {transaction.categoria || 'Outros'}
-                    </span>
+                    <span className="category-pill">{transaction.categoria || 'Outros'}</span>
+                  )}
+                </td>
+                <td>
+                  {editRowId === transaction.id ? (
+                    <div className="action-buttons">
+                      <button className="btn-small primary" onClick={saveEdit}>Salvar</button>
+                      <button className="btn-small" onClick={cancelEdit}>Cancelar</button>
+                    </div>
+                  ) : (
+                    <div className="action-buttons">
+                      <button className="btn-small" onClick={() => startEdit(transaction)}>Editar</button>
+                      <button className="btn-small danger" onClick={() => handleDelete(transaction.id)}>Remover</button>
+                    </div>
                   )}
                 </td>
               </tr>

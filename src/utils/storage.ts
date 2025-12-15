@@ -2,7 +2,8 @@ import { Transaction, Investment } from '../types'
 
 const STORAGE_KEYS = {
   TRANSACTIONS: 'dash-financeiro-transactions',
-  INVESTMENTS: 'dash-financeiro-investments'
+  INVESTMENTS: 'dash-financeiro-investments',
+  PENDING_TRANSACTIONS: 'dash-financeiro-pending-transactions'
 }
 
 /**
@@ -39,6 +40,35 @@ export function addTransactions(newTransactions: Transaction[]): void {
 }
 
 /**
+ * Fluxo de verificação - transações pendentes
+ */
+export function savePendingTransactions(transactions: Transaction[]): void {
+  try {
+    localStorage.setItem(STORAGE_KEYS.PENDING_TRANSACTIONS, JSON.stringify(transactions))
+  } catch (error) {
+    console.error('Erro ao salvar transações pendentes:', error)
+  }
+}
+
+export function loadPendingTransactions(): Transaction[] {
+  try {
+    const data = localStorage.getItem(STORAGE_KEYS.PENDING_TRANSACTIONS)
+    return data ? JSON.parse(data) : []
+  } catch (error) {
+    console.error('Erro ao carregar transações pendentes:', error)
+    return []
+  }
+}
+
+export function clearPendingTransactions(): void {
+  try {
+    localStorage.removeItem(STORAGE_KEYS.PENDING_TRANSACTIONS)
+  } catch (error) {
+    console.error('Erro ao limpar transações pendentes:', error)
+  }
+}
+
+/**
  * Atualiza uma transação específica
  */
 export function updateTransaction(transactionId: string, updates: Partial<Transaction>): void {
@@ -46,6 +76,15 @@ export function updateTransaction(transactionId: string, updates: Partial<Transa
   const updated = transactions.map(t =>
     t.id === transactionId ? { ...t, ...updates } : t
   )
+  saveTransactions(updated)
+}
+
+/**
+ * Remove uma transação específica
+ */
+export function deleteTransaction(transactionId: string): void {
+  const transactions = loadTransactions()
+  const updated = transactions.filter(t => t.id !== transactionId)
   saveTransactions(updated)
 }
 
