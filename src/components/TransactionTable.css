@@ -125,6 +125,46 @@
   font-size: 0.9rem;
 }
 
+.category-pill {
+  background: #eef2ff;
+  color: #3949ab;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.btn-small {
+  padding: 0.35rem 0.6rem;
+  border: 1px solid #d0d0d0;
+  border-radius: 6px;
+  background: #f8f9fa;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.btn-small.primary {
+  background: #667eea;
+  color: white;
+  border-color: #667eea;
+}
+
+.btn-small.danger {
+  background: #ffebee;
+  color: #c62828;
+  border-color: #ef9a9a;
+}
+
+.btn-small:hover {
+  filter: brightness(0.97);
+}
+
 @media (max-width: 768px) {
   .transaction-table {
     font-size: 0.8rem;

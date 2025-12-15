@@ -3,6 +3,7 @@ import UploadPage from './pages/UploadPage'
 import TablesPage from './pages/TablesPage'
 import ChartsPage from './pages/ChartsPage'
 import InvestmentsPage from './pages/InvestmentsPage'
+import VerificationPage from './pages/VerificationPage'
 import './App.css'
 
 function App() {
@@ -23,6 +24,7 @@ function App() {
         <main className="main-content">
           <Routes>
             <Route path="/" element={<UploadPage />} />
+            <Route path="/verificacao" element={<VerificationPage />} />
             <Route path="/tabelas" element={<TablesPage />} />
             <Route path="/graficos" element={<ChartsPage />} />
             <Route path="/investimentos" element={<InvestmentsPage />} />

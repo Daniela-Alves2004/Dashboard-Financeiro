@@ -1,14 +1,16 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Person } from '../types'
 import { parseCSV } from '../utils/csvParser'
 import { categorizarTransacoes } from '../utils/categorization'
-import { addTransactions } from '../utils/storage'
+import { savePendingTransactions, clearPendingTransactions } from '../utils/storage'
 import './UploadPage.css'
 
 function UploadPage() {
   const [pessoa, setPessoa] = useState<Person>('Daniela')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
+  const navigate = useNavigate()
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -35,13 +37,12 @@ function UploadPage() {
       // Categoriza as transações
       const categorizadas = categorizarTransacoes(transactions)
 
-      // Salva no storage
-      addTransactions(categorizadas)
+      // Limpa pendências anteriores e salva como pendente para revisão
+      clearPendingTransactions()
+      savePendingTransactions(categorizadas)
 
-      setMessage({
-        type: 'success',
-        text: `${categorizadas.length} transações importadas com sucesso para ${pessoa}!`
-      })
+      // Redireciona para página de verificação antes de qualquer persistência
+      navigate('/verificacao', { state: { count: categorizadas.length, pessoa } })
 
       // Limpa o input
       event.target.value = ''
